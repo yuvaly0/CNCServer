@@ -4,11 +4,26 @@ import threading
 host = '0.0.0.0'
 port = 65432
 
+HEADER_SIZE = 4
+
+'''
+protocol
+# [magic_number] - number the server sends each client upon connection to verify him
+[header] - 4 bytes that represent the length of the message to come
+[message] - 'header' length bytes that contains the command
+    - command
+'''
+
 def handle_client(connection, address):
     print(f"[handle_client] Starting to handle client {connection} {address}")
     connected = True
+
     while connected:
-        pass
+        message_header_received = connection.recv(HEADER_SIZE).decode('utf-8')
+        message_length = int(message_header_received)
+        message = connection.recv(message_length).decode('utf-8')
+
+        connected = False
 
     connection.close()
 
