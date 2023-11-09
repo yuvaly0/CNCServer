@@ -1,5 +1,6 @@
 import socket
 import threading
+from Yuvi import decode_header, decode_message
 
 host = '0.0.0.0'
 port = 65432
@@ -35,13 +36,8 @@ def handle_client(connection, address):
     connected = True
 
     while connected:
-        message_header_received = connection.recv(HEADER_SIZE).decode('utf-8')
-
-        if message_header_received == '':
-            continue
-
-        message_length = int(message_header_received)
-        message = connection.recv(message_length).decode('utf-8')
+        message_length = decode_header(connection.recv(HEADER_SIZE))
+        message = decode_message(connection.recv(message_length))
         message_handler = message_handlers.get(message, default_handler)
 
         connected = message_handler()
