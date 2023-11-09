@@ -14,18 +14,40 @@ protocol
     - command
 '''
 
+
+def ping_handler():
+    print("Received ping")
+    return True
+
+
+def default_handler():
+    print("Received unknown message")
+    return False
+
+
+message_handlers = {
+    'PING': ping_handler
+}
+
+
 def handle_client(connection, address):
     print(f"[handle_client] Starting to handle client {connection} {address}")
     connected = True
 
     while connected:
         message_header_received = connection.recv(HEADER_SIZE).decode('utf-8')
+
+        if message_header_received == '':
+            continue
+
         message_length = int(message_header_received)
         message = connection.recv(message_length).decode('utf-8')
+        message_handler = message_handlers.get(message, default_handler)
 
-        connected = False
+        connected = message_handler()
 
     connection.close()
+
 
 def start_server():
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:
