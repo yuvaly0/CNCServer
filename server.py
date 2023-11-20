@@ -17,18 +17,28 @@ protocol
 
 
 def handle_recv_msg(current_socket):
-    message_length = decode_header(current_socket.recv(HEADER_SIZE))
+    try:
+        encoded_header = current_socket.recv(HEADER_SIZE)
+        if not encoded_header:
+            print("Client closed connection")
+            return False
 
-    if message_length == -1:
+        message_length = decode_header(encoded_header)
+
+        if message_length == -1:
+            return False
+
+        message = decode_message(current_socket.recv(message_length))
+        print(f'[RECEIVED] {current_socket} - {message}')
+        return True
+    except ConnectionResetError as e:
+        print("Client disconnected forcibly")
         return False
-
-    message = decode_message(current_socket.recv(message_length))
-    print(f'Server Received {message}')
-    return True
 
 
 def handle_send_msg(current_socket, message_queues):
     current_msg = message_queues[current_socket]
+    print(f'[SENDING] {current_socket} - {current_msg}')
     current_socket.sendall(encode_message(current_msg))
 
 
