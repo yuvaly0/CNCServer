@@ -20,6 +20,6 @@ def decode_message(encoded_message):
 
 
 MESSAGES = {
-    'PONG': b'PONG',
-    'PING': b'PING'
+    'PONG': 'PONG',
+    'PING': 'PING'
 }
