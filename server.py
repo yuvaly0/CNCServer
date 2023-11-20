@@ -60,6 +60,7 @@ def start_server():
 
             for current_socket in readable:
                 if current_socket is server_socket:
+                    print('[+] Received new connection')
                     connection, client_address = server_socket.accept()
                     connection.setblocking(False)
                     inputs.append(connection)
@@ -70,6 +71,8 @@ def start_server():
                     result = handle_recv_msg(current_socket)
 
                     if not result:
+                        inputs.remove(current_socket)
+                        outputs.remove(current_socket)
                         current_socket.close()
 
             for current_socket in writeable:
