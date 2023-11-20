@@ -17,3 +17,9 @@ def decode_header(encoded_header):
 
 def decode_message(encoded_message):
     return encoded_message.decode('utf-8')
+
+
+MESSAGES = {
+    'PONG': b'PONG',
+    'PING': b'PING'
+}

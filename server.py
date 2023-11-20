@@ -1,6 +1,6 @@
 import socket
 import select
-from Yuvi import decode_header, decode_message, encode_message
+from communication import decode_header, decode_message, encode_message, MESSAGES
 
 host = '0.0.0.0'
 port = 65432
@@ -23,16 +23,13 @@ def handle_recv_msg(current_socket):
         return False
 
     message = decode_message(current_socket.recv(message_length))
-    print(f'Received {message}')
+    print(f'Server Received {message}')
     return True
 
 
 def handle_send_msg(current_socket, message_queues):
-    try:
-        current_msg = message_queues[current_socket]
-        current_socket.sendall(encode_message(current_msg))
-    except Exception as e:
-        pass
+    current_msg = message_queues[current_socket]
+    current_socket.sendall(encode_message(current_msg))
 
 
 def start_server():
@@ -48,16 +45,17 @@ def start_server():
         message_queues = {}
 
         while True:
+            # todo: add exceptional array
             readable, writeable, exceptional = select.select(inputs, outputs, [])
 
             for current_socket in readable:
                 if current_socket is server_socket:
-                    connection, client_address = current_socket.accept()
+                    connection, client_address = server_socket.accept()
                     connection.setblocking(False)
-                    inputs.append(current_socket)
-                    outputs.append(current_socket)
+                    inputs.append(connection)
+                    outputs.append(connection)
 
-                    message_queues[connection] = b'ping'
+                    message_queues[connection] = MESSAGES.get('PING')
                 else:
                     result = handle_recv_msg(current_socket)
 
@@ -66,8 +64,11 @@ def start_server():
 
             for current_socket in writeable:
                 try:
-                    handle_send_msg(current_socket, message_queues)
+                    if message_queues.get(current_socket, None):
+                        handle_send_msg(current_socket, message_queues)
+                        del message_queues[current_socket]
                 except Exception as e:
+                    print(f'could not send message to client {e}')
                     pass
 
             for current_socket in exceptional:
