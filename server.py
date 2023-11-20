@@ -1,5 +1,6 @@
 import socket
 import select
+from datetime import datetime
 from communication import decode_header, decode_message, encode_message, MESSAGES
 
 host = '0.0.0.0'
@@ -15,12 +16,16 @@ protocol
     - command
 '''
 
+# todo: move to class
+clients = {}
+
 
 def handle_recv_msg(current_socket):
     try:
         encoded_header = current_socket.recv(HEADER_SIZE)
         if not encoded_header:
             print("Client closed connection")
+            # throw instead of returning boolean
             return False
 
         message_length = decode_header(encoded_header)
@@ -28,8 +33,13 @@ def handle_recv_msg(current_socket):
         if message_length == -1:
             return False
 
+        # todo: handle when there isn't start_time
+        start_time = clients[current_socket][-1]['start_time']
+        delta = (datetime.now() - start_time)
+        delta_ms = delta.total_seconds() * 1000
+
         message = decode_message(current_socket.recv(message_length))
-        print(f'[RECEIVED] {current_socket} - {message}')
+        print(f'[RECEIVED] {delta_ms}ms - {message} - {current_socket}')
         return True
     except ConnectionResetError as e:
         print("Client disconnected forcibly")
@@ -38,6 +48,8 @@ def handle_recv_msg(current_socket):
 
 def handle_send_msg(current_socket, message_queues):
     current_msg = message_queues[current_socket]
+    clients[current_socket].append({'start_time': datetime.now()})
+
     print(f'[SENDING] {current_socket} - {current_msg}')
     current_socket.sendall(encode_message(current_msg))
 
@@ -66,12 +78,14 @@ def start_server():
                     outputs.append(connection)
 
                     message_queues[connection] = MESSAGES.get('PING')
+                    clients[connection] = []
                 else:
                     result = handle_recv_msg(current_socket)
 
                     if not result:
                         inputs.remove(current_socket)
                         outputs.remove(current_socket)
+                        del clients[current_socket]
                         current_socket.close()
 
             for current_socket in writeable:
@@ -84,9 +98,11 @@ def start_server():
                     pass
 
             for current_socket in exceptional:
+                # todo: create one function to handle cleanup logic
                 print(f'Exception socket - {current_socket} removed')
                 inputs.remove(current_socket)
                 outputs.remove(current_socket)
+                del clients[current_socket]
 
                 current_socket.close()
 
