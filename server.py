@@ -55,8 +55,7 @@ def start_server():
         message_queues = {}
 
         while True:
-            # todo: add exceptional array
-            readable, writeable, exceptional = select.select(inputs, outputs, [])
+            readable, writeable, exceptional = select.select(inputs, outputs, inputs + outputs)
 
             for current_socket in readable:
                 if current_socket is server_socket:
@@ -85,9 +84,9 @@ def start_server():
                     pass
 
             for current_socket in exceptional:
+                print(f'Exception socket - {current_socket} removed')
                 inputs.remove(current_socket)
-                if current_socket in outputs:
-                    outputs.remove(current_socket)
+                outputs.remove(current_socket)
 
                 current_socket.close()
 
