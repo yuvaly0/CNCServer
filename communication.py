@@ -1,6 +1,21 @@
+from datetime import datetime
+
+TIMESTAMP_LENGTH = 26
+
+
+def format_timestamp(timestamp):
+    truncated_microseconds = int(timestamp.microsecond / 1000) * 1000
+    timestamp = timestamp.replace(microsecond=truncated_microseconds)
+
+    return timestamp
+
+
 def encode_message(message):
-    header = str(len(message)).rjust(4, '0')
-    encoded_msg = bytes(header + message, encoding='utf-8')
+    timestamp = format_timestamp(datetime.now())
+    full_message = f"{timestamp}{message}"
+
+    header = str(len(full_message)).rjust(4, '0')
+    encoded_msg = bytes(header + full_message, encoding='utf-8')
 
     return encoded_msg
 
@@ -16,7 +31,17 @@ def decode_header(encoded_header):
 
 
 def decode_message(encoded_message):
-    return encoded_message.decode('utf-8')
+    decoded_message = encoded_message.decode('utf-8')
+
+    # Split the message to separate timestamp and actual message
+    timestamp_string = decoded_message[:TIMESTAMP_LENGTH]
+    message = decoded_message[TIMESTAMP_LENGTH:]
+
+    try:
+        timestamp = datetime.fromisoformat(timestamp_string)
+        return timestamp, message
+    except ValueError:
+        return None, None
 
 
 MESSAGES = {

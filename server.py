@@ -2,7 +2,7 @@ import socket
 import select
 from datetime import datetime
 import time
-from communication import decode_header, decode_message, encode_message, MESSAGES
+from communication import decode_header, decode_message, encode_message, format_timestamp, MESSAGES
 
 host = '0.0.0.0'
 port = 65432
@@ -18,7 +18,6 @@ protocol
 '''
 
 # todo: move to class
-clients = {}
 last_ping_time = {}
 
 
@@ -28,30 +27,31 @@ def handle_recv_msg(current_socket):
         if not encoded_header:
             print("Client closed connection")
             # throw instead of returning boolean
-            return False
+            return False, current_socket
 
         message_length = decode_header(encoded_header)
 
         if message_length == -1:
-            return False
+            return False, current_socket
 
-        # todo: handle when there isn't start_time
-        start_time = clients[current_socket][-1]['start_time']
-        delta = (datetime.now() - start_time)
-        delta_ms = delta.total_seconds() * 1000
+        sent_timestamp, message = decode_message(current_socket.recv(message_length))
 
-        message = decode_message(current_socket.recv(message_length))
+        now = format_timestamp(datetime.now())
+        delta_ms = (now - sent_timestamp).total_seconds() * 1000
+
+        if sent_timestamp is None:
+            return False, current_socket
+
         print(f'[RECEIVED] {datetime.now()} - {current_socket.fileno()} - {message} - took {delta_ms}ms')
-        return True
+        return True, current_socket
     except ConnectionResetError as e:
         print(f'[RECEIVED] {current_socket.fileno()} - disconnected forcibly')
-        return False
+        return False, current_socket
 
 
 def handle_send_msg(current_socket, message_queues):
     current_msg = message_queues[current_socket]
     current_time = datetime.now()
-    clients[current_socket].append({'start_time': current_time})
 
     print(f'[SENDING] {current_time} - {current_socket.fileno()} - {current_msg}')
 
@@ -85,14 +85,14 @@ def start_server():
 
                     message_queues[connection] = MESSAGES.get('PING')
                     last_ping_time[connection] = current_time
-                    clients[connection] = []
                 else:
-                    result = handle_recv_msg(current_socket)
+                    # todo: current_socket is patch
+                    result, current_socket = handle_recv_msg(current_socket)
 
                     if not result:
+                        print(f'[RECEIVED] {datetime.now()} - {current_socket.fileno()} - BAD MESSAGE')
                         inputs.remove(current_socket)
                         outputs.remove(current_socket)
-                        del clients[current_socket]
                         current_socket.close()
 
             for current_socket in writeable:
@@ -109,7 +109,6 @@ def start_server():
                 print(f'Exception socket - {current_socket} removed')
                 inputs.remove(current_socket)
                 outputs.remove(current_socket)
-                del clients[current_socket]
 
                 current_socket.close()
 

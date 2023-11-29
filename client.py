@@ -16,9 +16,12 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
             break
         else:
             message_length = decode_header(encoded_header)
-            decoded_message = decode_message(client_socket.recv(message_length))
+            _, decoded_message = decode_message(client_socket.recv(message_length))
 
             print(f'[RECEIVED] {decoded_message}')
 
             if decoded_message == MESSAGES.get('PING'):
-                client_socket.sendall(encode_message(MESSAGES.get('PONG')))
+                to_send_message = MESSAGES.get('PONG')
+
+                print(f"[SENDING] {to_send_message}")
+                client_socket.sendall(encode_message(to_send_message))
