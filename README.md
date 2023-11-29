@@ -2,8 +2,7 @@
 
 ## Overview
 
-This CNC Server is a python single-threaded server application
-designed to handle multiple client connections 
+This CNC Server is a python single-threaded server application designed to handle multiple client connections 
 using non-blocking I/O with the `select` method.
 
 ## Features
