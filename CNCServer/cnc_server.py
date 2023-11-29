@@ -12,12 +12,11 @@ class CNCServer:
         self.server_socket = None
         self.inputs = []
         self.outputs = []
-        self.last_ping_time = {}
-        self.clients_commands = {}
+        self.clients_commands_times = {}
         self.message_queues = {}
         self.commands = {
             MESSAGES.get('PING'): [],
-            MESSAGES.get('EXEC'): ['hwllo']
+            MESSAGES.get('EXEC'): ['dir']
         }
 
     def start_server(self):
@@ -56,8 +55,7 @@ class CNCServer:
         self.outputs.append(connection)
 
         self.message_queues[connection] = [MESSAGES.get('PING')]
-        self.last_ping_time[connection] = time.time()
-        self.clients_commands[connection] = {MESSAGES.get('PING'): time.time()}
+        self.clients_commands_times[connection] = {MESSAGES.get('PING'): time.time()}
 
     def handle_recv_message(self, current_socket):
         result = self.recv_message(current_socket)
@@ -120,14 +118,6 @@ class CNCServer:
 
         current_socket.close()
 
-    def ping_clients(self):
-        current_time = time.time()
-
-        for current_socket in self.inputs:
-            if current_socket is not self.server_socket and current_time - self.last_ping_time[current_socket] >= 5:
-                self.message_queues[current_socket] = [MESSAGES.get('PING')]
-                self.last_ping_time[current_socket] = current_time
-
     def run_commands(self):
         current_time = time.time()
 
@@ -136,10 +126,10 @@ class CNCServer:
                 if current_socket is self.server_socket:
                     continue
 
-                if current_time - self.clients_commands.get(current_socket).get(command_name, 0) >= 5:
+                if current_time - self.clients_commands_times.get(current_socket).get(command_name, 0) >= 5:
                     self.message_queues[current_socket].append(command_name)
 
-                    if not self.clients_commands[current_socket]:
-                        self.clients_commands[current_socket] = {}
+                    if not self.clients_commands_times[current_socket]:
+                        self.clients_commands_times[current_socket] = {}
 
-                    self.clients_commands[current_socket][command_name] = current_time
+                    self.clients_commands_times[current_socket][command_name] = current_time
