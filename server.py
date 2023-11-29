@@ -39,18 +39,20 @@ def handle_recv_msg(current_socket):
         delta_ms = delta.total_seconds() * 1000
 
         message = decode_message(current_socket.recv(message_length))
-        print(f'[RECEIVED] {delta_ms}ms - {message} - {current_socket}')
+        print(f'[RECEIVED] {datetime.now()} - {current_socket.fileno()} - {message} - took {delta_ms}ms')
         return True
     except ConnectionResetError as e:
-        print("Client disconnected forcibly")
+        print(f'[RECEIVED] {current_socket.fileno()} - disconnected forcibly')
         return False
 
 
 def handle_send_msg(current_socket, message_queues):
     current_msg = message_queues[current_socket]
-    clients[current_socket].append({'start_time': datetime.now()})
+    current_time = datetime.now()
+    clients[current_socket].append({'start_time': current_time})
 
-    print(f'[SENDING] {current_socket} - {current_msg}')
+    print(f'[SENDING] {current_time} - {current_socket.fileno()} - {current_msg}')
+
     current_socket.sendall(encode_message(current_msg))
 
 
