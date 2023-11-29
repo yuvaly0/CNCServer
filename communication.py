@@ -2,6 +2,7 @@ from datetime import datetime
 
 TIMESTAMP_LENGTH = 26
 HEADER_SIZE = 4
+DELIMITER = '$'
 
 """
 protocol docs
@@ -9,7 +10,7 @@ protocol docs
 [header] - 4 bytes that represent the length of the message to come
 [message] - 'header' length bytes that contains the command
     - timestamp string, iso format
-    - command
+    - message
 """
 
 
@@ -19,10 +20,10 @@ def format_timestamp(timestamp):
 
     return timestamp
 
-
-def encode_message(message):
+# todo: Support escaping of delimeter
+def encode_message(command, params):
     timestamp = format_timestamp(datetime.now())
-    full_message = f"{timestamp}{message}"
+    full_message = f"{timestamp}{command}{DELIMITER.join(params)}"
 
     header = str(len(full_message)).rjust(HEADER_SIZE, '0')
     encoded_msg = bytes(header + full_message, encoding='utf-8')
@@ -45,17 +46,23 @@ def decode_message(encoded_message):
 
     # Split the message to separate timestamp and actual message
     timestamp_string = decoded_message[:TIMESTAMP_LENGTH]
-    message = decoded_message[TIMESTAMP_LENGTH:]
+    raw_message = decoded_message[TIMESTAMP_LENGTH:]
+
+    # Extract command and parameters
+    message = raw_message.split(DELIMITER)
+    command = message[0]
+    parameters = message[1:]
 
     try:
         timestamp = datetime.fromisoformat(timestamp_string)
-        return timestamp, message
+        return timestamp, command, parameters
     except ValueError:
-        return None, None
+        return None, None, []
 
 
 MESSAGES = {
     'PONG': 'PONG',
-    'PING': 'PING'
+    'PING': 'PING',
+    'EXEC': 'EXEC'
 }
 

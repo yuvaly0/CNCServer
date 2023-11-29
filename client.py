@@ -1,10 +1,12 @@
 import socket
-from communication import encode_message, decode_header, decode_message, MESSAGES
+from communication import encode_message, decode_header, decode_message, MESSAGES, HEADER_SIZE
 
 HOST = '127.0.0.1'
 PORT = 65432
 
-HEADER_SIZE = 4
+commands = {
+            MESSAGES.get('PONG'): []
+        }
 
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
     client_socket.connect((HOST, PORT))
@@ -16,12 +18,16 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
             break
         else:
             message_length = decode_header(encoded_header)
-            _, decoded_message = decode_message(client_socket.recv(message_length))
+            _, command, parameters = decode_message(client_socket.recv(message_length))
 
-            print(f'[RECEIVED] {decoded_message}')
+            print(f'[RECEIVED] {command} {parameters}')
 
-            if decoded_message == MESSAGES.get('PING'):
+            if command == MESSAGES.get('PING'):
                 to_send_message = MESSAGES.get('PONG')
+                parameters = commands.get(to_send_message)
 
-                print(f"[SENDING] {to_send_message}")
-                client_socket.sendall(encode_message(to_send_message))
+                print(f"[SENDING] {to_send_message} {parameters}")
+                client_socket.sendall(encode_message(to_send_message, parameters))
+            if command == MESSAGES.get('EXEC'):
+                print(f'[DEBUG] - executing {parameters[0]}')
+
