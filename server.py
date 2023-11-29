@@ -1,6 +1,7 @@
 import socket
 import select
 from datetime import datetime
+import time
 from communication import decode_header, decode_message, encode_message, MESSAGES
 
 host = '0.0.0.0'
@@ -18,6 +19,7 @@ protocol
 
 # todo: move to class
 clients = {}
+last_ping_time = {}
 
 
 def handle_recv_msg(current_socket):
@@ -71,6 +73,8 @@ def start_server():
         while True:
             readable, writeable, exceptional = select.select(inputs, outputs, inputs + outputs)
 
+            current_time = time.time()
+
             for current_socket in readable:
                 if current_socket is server_socket:
                     print('[+] Received new connection')
@@ -80,6 +84,7 @@ def start_server():
                     outputs.append(connection)
 
                     message_queues[connection] = MESSAGES.get('PING')
+                    last_ping_time[connection] = current_time
                     clients[connection] = []
                 else:
                     result = handle_recv_msg(current_socket)
@@ -107,6 +112,11 @@ def start_server():
                 del clients[current_socket]
 
                 current_socket.close()
+
+            for current_socket in inputs:
+                if current_socket is not server_socket and current_time - last_ping_time[current_socket] >= 5:
+                    message_queues[current_socket] = MESSAGES.get('PING')
+                    last_ping_time[current_socket] = current_time
 
 
 start_server()
