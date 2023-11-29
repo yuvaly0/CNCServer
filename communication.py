@@ -1,6 +1,16 @@
 from datetime import datetime
 
 TIMESTAMP_LENGTH = 26
+HEADER_SIZE = 4
+
+"""
+protocol docs
+
+[header] - 4 bytes that represent the length of the message to come
+[message] - 'header' length bytes that contains the command
+    - timestamp string, iso format
+    - command
+"""
 
 
 def format_timestamp(timestamp):
@@ -14,7 +24,7 @@ def encode_message(message):
     timestamp = format_timestamp(datetime.now())
     full_message = f"{timestamp}{message}"
 
-    header = str(len(full_message)).rjust(4, '0')
+    header = str(len(full_message)).rjust(HEADER_SIZE, '0')
     encoded_msg = bytes(header + full_message, encoding='utf-8')
 
     return encoded_msg
@@ -48,3 +58,4 @@ MESSAGES = {
     'PONG': 'PONG',
     'PING': 'PING'
 }
+
