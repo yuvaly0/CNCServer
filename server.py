@@ -1,7 +1,4 @@
-# todo add magic number to verify integrrity
-# todo, add some unique id to each client
+from CNCServer.cnc_server import CNCServer
 
-from TCPServer.TCPServer import TCPServer
-
-server = TCPServer()
+server = CNCServer()
 server.start_server()

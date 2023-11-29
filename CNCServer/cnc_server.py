@@ -5,7 +5,7 @@ from datetime import datetime
 from communication import decode_header, decode_message, encode_message, format_timestamp, MESSAGES, HEADER_SIZE
 
 
-class TCPServer:
+class CNCServer:
     def __init__(self, host='0.0.0.0', port=65432):
         self.host = host
         self.port = port
