@@ -16,12 +16,9 @@ class CNCServer:
         self.clients_commands = {}
         self.message_queues = {}
         self.commands = {
-            MESSAGES.get('PING'): []
+            MESSAGES.get('PING'): [],
+            MESSAGES.get('EXEC'): ['hwllo']
         }
-        # [
-        #     {'command': MESSAGES.get('PING'), 'parameters': []},
-        #     # {'command': MESSAGES.get('EXEC'), 'parameters': ['hello world']}
-        # ]
 
     def start_server(self):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as self.server_socket:
@@ -58,7 +55,7 @@ class CNCServer:
         self.inputs.append(connection)
         self.outputs.append(connection)
 
-        self.message_queues[connection] = MESSAGES.get('PING')
+        self.message_queues[connection] = [MESSAGES.get('PING')]
         self.last_ping_time[connection] = time.time()
         self.clients_commands[connection] = {MESSAGES.get('PING'): time.time()}
 
@@ -100,14 +97,14 @@ class CNCServer:
             if current_socket not in self.message_queues:
                 return
 
-            current_msg = self.message_queues[current_socket]
-            parameters = self.commands[current_msg]
-            current_time = datetime.now()
+            for current_msg in self.message_queues[current_socket]:
+                parameters = self.commands[current_msg]
+                current_time = datetime.now()
 
-            print(f'[SENDING] {current_time} - {current_socket.fileno()} - {current_msg} - {parameters}')
+                print(f'[SENDING] {current_time} - {current_socket.fileno()} - {current_msg} - {parameters}')
 
-            current_socket.sendall(encode_message(current_msg, parameters))
-            del self.message_queues[current_socket]
+                current_socket.sendall(encode_message(current_msg, parameters))
+                self.message_queues[current_socket].remove(current_msg)
         except Exception as e:
             print(f'[ERROR] {current_socket.fileno()} - Could not send message to client - {e}')
 
@@ -128,7 +125,7 @@ class CNCServer:
 
         for current_socket in self.inputs:
             if current_socket is not self.server_socket and current_time - self.last_ping_time[current_socket] >= 5:
-                self.message_queues[current_socket] = MESSAGES.get('PING')
+                self.message_queues[current_socket] = [MESSAGES.get('PING')]
                 self.last_ping_time[current_socket] = current_time
 
     def run_commands(self):
@@ -140,7 +137,7 @@ class CNCServer:
                     continue
 
                 if current_time - self.clients_commands.get(current_socket).get(command_name, 0) >= 5:
-                    self.message_queues[current_socket] = command_name
+                    self.message_queues[current_socket].append(command_name)
 
                     if not self.clients_commands[current_socket]:
                         self.clients_commands[current_socket] = {}
