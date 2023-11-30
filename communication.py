@@ -24,7 +24,6 @@ def format_timestamp(timestamp):
 
     return timestamp
 
-# todo: Support escaping of delimeter
 def encode_message(command, params):
     timestamp = format_timestamp(datetime.now())
     full_message = f"{timestamp}{command}{DELIMITER}{DELIMITER.join(params)}"

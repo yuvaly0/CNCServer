@@ -48,3 +48,4 @@ The project is structured into several files, each serving a specific purpose:
 
 ## TODO
 - Support cli usage using `sys.stdin`
+- Escape delimiter characters that will be sent inside the command or the parameters
