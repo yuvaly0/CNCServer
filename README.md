@@ -11,9 +11,9 @@ using non-blocking I/O with the `select` method.
 - **Custom Protocol Handling**: Implements a protocol for message encoding and decoding.
 - **Periodic Pings**: Sends "PING" messages to connected clients at regular intervals to maintain connection integrity.
 - **Timestamp Inclusion**: Each message includes a timestamp, allowing for latency calculations and time tracking.
-- **Connection Management**: Efficiently handles new connections, client disconnections, and data transmission.
-- **Secured Messages**: Messages are sent with a "magic" for verification.
+- **Magic Inclusion**: Each message includes a magic, allowing for filtering messages for verification.
 - **Custom Commands**: Able to send command with variable number of commands to the client
+- **Connection Management**: Efficiently handles new connections, client disconnections, and data transmission.
 
 ## Requirements
 
