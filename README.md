@@ -12,6 +12,8 @@ using non-blocking I/O with the `select` method.
 - **Periodic Pings**: Sends "PING" messages to connected clients at regular intervals to maintain connection integrity.
 - **Timestamp Inclusion**: Each message includes a timestamp, allowing for latency calculations and time tracking.
 - **Connection Management**: Efficiently handles new connections, client disconnections, and data transmission.
+- **Secured Messages**: Messages are sent with a "magic" for verification.
+- **Custom Commands**: Able to send command with variable number of commands to the client
 
 ## Requirements
 
@@ -45,6 +47,4 @@ The project is structured into several files, each serving a specific purpose:
 - `communication.py`: This file contains the utility functions for message encoding, decoding, and timestamp formatting. based on the custom protocol we wrote.
 
 ## TODO
-- Add magic number to the header of the protocol to verify integrity
-- Support more commands 
 - Support cli usage using `sys.stdin`
